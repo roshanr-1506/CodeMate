@@ -1,0 +1,20 @@
+{
+  "date": "2026-09-08T17:09:25.714Z",
+  "database": "isolated embedded PostgreSQL (PGlite)",
+  "teams": 100,
+  "websocketConnections": 200,
+  "httpLogins": 200,
+  "httpTeamReads": 200,
+  "simultaneousChessGames": 50,
+  "realEngineAnalyses": 150,
+  "engineWorkers": 2,
+  "operations": 850,
+  "p50Ms": 507,
+  "p95Ms": 1183,
+  "maxMs": 1453,
+  "scoreMessages": 1200,
+  "deterministicBalance520": true,
+  "ledgerMismatches": 0,
+  "duplicateTransactions": 0,
+  "note": "Local functional stress test. Hosted PostgreSQL/network capacity must be benchmarked on the deployment target."
+}

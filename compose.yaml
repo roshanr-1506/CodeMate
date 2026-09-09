@@ -1,0 +1,29 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: codemate
+      POSTGRES_USER: codemate
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U codemate']
+      interval: 5s
+      retries: 10
+  app:
+    build: .
+    ports: ['3001:3001']
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://codemate:${POSTGRES_PASSWORD}@db:5432/codemate
+      FRONTEND_URL: ${FRONTEND_URL:?Set an HTTPS frontend URL}
+      SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET}
+      ENGINE_WORKERS: 2
+    depends_on:
+      db:
+        condition: service_healthy
+    init: true
+    restart: unless-stopped
+volumes:
+  postgres-data:

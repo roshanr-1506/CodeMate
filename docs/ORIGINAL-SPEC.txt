@@ -1,0 +1,3558 @@
+You are building a production-ready, full-stack competitive event platform called:
+
+                    CODEMATE 2.0
+
+The platform combines:
+
+1. Live 1v1 chess
+2. Chess piece-capture scoring
+3. Chess move-quality scoring using Stockfish
+4. Chess match result scoring
+5. MCQ-based debugging challenges
+6. Debugging points
+7. Power-ups
+8. Reward shop
+9. Individual premium debugging questions
+10. Premium question sets
+11. Shared team points
+12. Two simultaneous team sessions
+13. Real-time synchronization
+14. Live leaderboard
+15. Admin control panel
+16. Competition monitoring
+17. Anti-cheating/security controls
+
+This must be a REAL working full-stack application.
+
+DO NOT create a static frontend.
+DO NOT create a visual-only prototype.
+DO NOT use fake APIs for core functionality.
+DO NOT hardcode scores.
+DO NOT use localStorage as the source of truth.
+DO NOT trust client-generated scores, timers, answers, purchases or chess events.
+
+The backend/database must always be the authoritative source of truth.
+
+==================================================
+1. EVENT IDENTITY
+==================================================
+
+Event Name:
+
+CODEMATE 2.0
+
+Organized/Branded as:
+
+Chandigarh University
+C Square Club
+
+Use the supplied CodeMate 2.0 poster as the primary branding and visual reference.
+
+The poster's visual identity should influence the application:
+
+- Black / very dark background
+- Warm gold / bronze highlights
+- White typography
+- Red accent elements
+- Chess pieces
+- Programming/code visual language
+- Premium competition atmosphere
+- Modern esports aesthetic
+- High contrast
+- Professional university-event appearance
+
+Do NOT simply copy the poster.
+
+Use it as the visual identity reference.
+
+Important visual concepts from the poster:
+
+"CODE"
+"STRATEGIZE"
+"CONQUER"
+
+"BETTER THINKING
+BRIGHTER TOMORROW"
+
+"SAME BOARD
+DIFFERENT GAME"
+
+"DIFFERENT MOVES
+SAME MINDSET"
+
+The website should communicate:
+
+CHESS + CODE + STRATEGY + COMPETITION
+
+==================================================
+2. PRIMARY PRODUCT CONCEPT
+==================================================
+
+Every team receives ONE Team ID and ONE password.
+
+Example:
+
+TEAM-001
+
+The same credentials can be used by a maximum of TWO simultaneous participants.
+
+Participant A:
+
+CHESS ROLE
+
+Participant B:
+
+DEBUGGING ROLE
+
+Therefore:
+
+TEAM-001
+├── Chess Session
+└── Debugging Session
+
+Maximum simultaneous sessions:
+
+2
+
+The third login must be rejected.
+
+Show:
+
+"Maximum active participants reached for this team."
+
+Do NOT silently terminate an existing session.
+
+The backend must enforce this limit.
+
+The frontend must NOT be trusted to enforce it.
+
+==================================================
+3. TWO-SESSION LOGIN MODEL
+==================================================
+
+There is one Team ID and one password per team.
+
+There are no separate participant credentials.
+
+When a team logs in:
+
+If zero active sessions:
+
+Allow login.
+
+The user selects/receives a role:
+
+CHESS
+
+or
+
+DEBUGGING
+
+If one session already exists:
+
+Allow the second session only if it is the other role.
+
+Example:
+
+Session 1:
+TEAM-001 → CHESS
+
+Session 2:
+TEAM-001 → DEBUGGING
+
+If both slots are occupied:
+
+Reject login with:
+
+"Maximum active participants reached for this team."
+
+Do NOT kick either existing participant.
+
+The two-session limit must be enforced server-side.
+
+Each session must have:
+
+sessionId
+teamId
+role
+createdAt
+lastHeartbeat
+status
+device/session metadata where appropriate
+
+Implement:
+
+- Secure authentication
+- Password hashing
+- HTTP-only cookies
+- Session expiration
+- Heartbeat
+- Last-active tracking
+- Stale-session cleanup
+- Logout
+- Browser crash recovery
+- Reconnection
+- Admin force logout
+
+==================================================
+4. ROLE SYSTEM
+==================================================
+
+Roles:
+
+CHESS
+
+DEBUGGING
+
+ADMIN
+
+CHESS ROLE can access:
+
+- Chess Arena
+- Current chess match
+- Chess score
+- Chess statistics
+- Chess match history
+- Team score
+
+DEBUGGING ROLE can access:
+
+- Debugging Arena
+- MCQ questions
+- Power-ups
+- Shop
+- Premium questions
+- Premium question sets
+- Debugging score
+- Team score
+
+ADMIN can access everything through RBAC.
+
+Role assignment should be controlled by the competition configuration.
+
+Once a participant has been assigned a role for a competition round, the role should not casually change.
+
+Only Admin can force-reassign.
+
+Force reassignment must:
+
+1. Force logout existing session
+2. Require fresh login
+3. Create an audit-log entry
+4. Record Admin reason
+
+==================================================
+5. MAIN DASHBOARD
+==================================================
+
+Create a premium competition dashboard.
+
+Top navigation:
+
+CODEMATE 2.0 logo/name
+
+Dashboard
+Chess Arena
+Debugging Arena
+Shop
+Leaderboard
+Team
+Rules
+Notifications
+
+Admin sees:
+
+Admin Dashboard
+
+Display the team:
+
+TEAM-001
+
+Show both participant statuses:
+
+CHESS
+● Active
+
+DEBUGGING
+● Active
+
+Also display:
+
+Chess Points
+Debugging Points
+Total Points
+Current Rank
+
+==================================================
+6. LIVE TEAM SCORE
+==================================================
+
+The team has two separate scoring categories:
+
+CHESS POINTS
+
+DEBUGGING POINTS
+
+And one combined:
+
+TOTAL POINTS
+
+All three must update in real time.
+
+Example:
+
+Chess Points:
+420
+
+Debugging Points:
+310
+
+Total:
+730
+
+If the chess participant captures a Queen:
+
++90
+
+The debugging participant must immediately see:
+
+Chess Points:
+510
+
+Total:
+820
+
+No page refresh.
+
+If the debugging participant purchases a power-up costing 100:
+
+Debugging participant:
+
+-100
+
+Chess participant immediately sees:
+
+Total:
+720
+
+All shared state must synchronize in real time.
+
+==================================================
+7. CENTRAL POINT LEDGER
+==================================================
+
+Create a central immutable point ledger.
+
+Every point-changing event MUST create a transaction.
+
+Examples:
+
+CHESS_CAPTURE
+CHESS_MOVE_QUALITY
+CHESS_RESULT
+DEBUGGING_CORRECT
+SHOP_PURCHASE
+POWERUP_USE
+ADMIN_ADJUSTMENT
+BONUS
+PENALTY
+REFUND
+
+Recommended fields:
+
+point_transactions
+
+id
+teamId
+type
+source
+amount
+balanceBefore
+balanceAfter
+referenceId
+operationId
+description
+metadata
+createdAt
+
+Never directly mutate points from the frontend.
+
+Every balance change must pass through a backend transaction.
+
+Use database transactions.
+
+Every operation must be idempotent.
+
+If a request is retried because of network failure, points must NOT be awarded twice.
+
+Use:
+
+operationId
+eventId
+unique constraints
+
+to prevent duplicate scoring.
+
+==================================================
+8. TOTAL POINTS
+==================================================
+
+Total team points are:
+
+CHESS POINTS
++
+DEBUGGING POINTS
+=
+TOTAL POINTS
+
+However, spending points from the shop must also reduce the team's spendable balance.
+
+Use a clear economic model.
+
+Recommended:
+
+Total Earned Points
+minus
+Total Spent Points
+=
+Current Spendable Balance
+
+Maintain separate earned/scoring categories for analytics:
+
+Chess Earned
+Debugging Earned
+
+and:
+
+Spendable Balance
+
+Do NOT make the user confused about which points are earned versus available to spend.
+
+Display clearly:
+
+CHESS
+420
+
+DEBUGGING
+310
+
+AVAILABLE BALANCE
+630
+
+TOTAL EARNED
+730
+
+if 100 points have already been spent.
+
+==================================================
+9. CHESS ARENA
+==================================================
+
+IMPORTANT:
+
+DO NOT DEPEND ON AN EXTERNAL CHESS WEBSITE FOR LIVE CHESS GAMEPLAY.
+
+DO NOT USE CHESS.COM OR LICHESS AS THE PRIMARY GAMEPLAY SYSTEM.
+
+The chess game must run directly inside this application.
+
+Use:
+
+react-chessboard
+
+chess.js
+
+Socket.IO
+
+Node.js backend
+
+Server-side Stockfish
+
+The platform owns the match state.
+
+==================================================
+10. CHESS FORMAT
+==================================================
+
+Chess format:
+
+1v1
+
+Time:
+
+UNLIMITED
+
+No countdown clock is required for the chess match.
+
+Players can play until:
+
+- Checkmate
+- Resignation
+- Draw
+- Other legal chess termination conditions
+
+The chess board must support:
+
+- White
+- Black
+- Legal moves
+- Captures
+- Check
+- Checkmate
+- Draw
+- Resignation
+- Rematch if enabled
+- Match history
+
+==================================================
+11. CHESS MATCHMAKING
+==================================================
+
+Create an internal matchmaking system.
+
+Example:
+
+TEAM-001 enters Chess Arena.
+
+Status:
+
+WAITING FOR OPPONENT
+
+Another team enters:
+
+TEAM-014
+
+Backend creates:
+
+MATCH-0001
+
+TEAM-001
+VS
+TEAM-014
+
+Assign:
+
+White
+Black
+
+Store match information in database.
+
+Do not allow two users to manipulate the same match from arbitrary clients.
+
+==================================================
+12. CHESS GAME AUTHORITY
+==================================================
+
+The server is authoritative.
+
+The browser sends:
+
+"Player wants to make move e2e4"
+
+Backend verifies:
+
+- User session
+- Team
+- Role
+- Match
+- Player color
+- Current turn
+- Legal move
+- Current board state
+
+Then the server accepts/rejects the move.
+
+The client must NOT decide that a move is valid.
+
+Use chess.js server-side as the authoritative chess rules engine.
+
+==================================================
+13. REAL-TIME CHESS
+==================================================
+
+Use Socket.IO.
+
+Flow:
+
+Player A
+↓
+Socket.IO
+↓
+Node.js server
+↓
+Validate move
+↓
+chess.js
+↓
+Update match
+↓
+Broadcast move
+↓
+Player B
+
+Events:
+
+chess:match_found
+chess:match_started
+chess:move_requested
+chess:move_accepted
+chess:move_rejected
+chess:capture
+chess:check
+chess:checkmate
+chess:draw
+chess:resigned
+chess:completed
+chess:reconnect
+
+Private match events must only go to players in that match.
+
+==================================================
+14. CHESS MOVE STORAGE
+==================================================
+
+Store every move.
+
+chess_moves:
+
+id
+matchId
+ply
+moveNumber
+teamId
+playerColor
+fromSquare
+toSquare
+san
+uci
+fenBefore
+fenAfter
+capturedPiece
+isCapture
+createdAt
+
+Do not rely on frontend move history.
+
+==================================================
+15. CHESS PIECE CAPTURE SCORING
+==================================================
+
+Captured pieces award points.
+
+DEFAULT VALUES:
+
+Pawn:
++10
+
+Knight:
++30
+
+Bishop:
++30
+
+Rook:
++50
+
+Queen:
++90
+
+King / Checkmate:
++70
+
+These values MUST be stored in database configuration.
+
+Never hardcode them in frontend code.
+
+Admin must be able to modify them.
+
+IMPORTANT:
+
+Chess does not normally allow physically capturing the King.
+
+Therefore:
+
+Do NOT implement an illegal "king capture".
+
+Award the +70 King/Checkmate value when the game reaches a verified checkmate condition, according to the competition scoring rule.
+
+Clearly label it in the UI as:
+
+"Checkmate Bonus +70"
+
+or:
+
+"King / Checkmate +70"
+
+depending on the configured wording.
+
+==================================================
+16. CHESS MATCH RESULT SCORING
+==================================================
+
+DEFAULT:
+
+WIN:
++100
+
+DRAW:
++50
+
+LOSS:
++10
+
+These must be configurable by Admin.
+
+Final chess scoring consists of:
+
+Capture Points
++
+Move Quality Points
++
+Match Result Bonus
+
+==================================================
+17. CHESS MOVE QUALITY SCORING
+==================================================
+
+Evaluate chess moves using a server-side chess engine.
+
+Use:
+
+Stockfish
+
+or another equivalent self-hosted chess engine.
+
+Do NOT trust browser-generated move-quality classifications.
+
+Create a backend service:
+
+analyzePosition()
+evaluateMove()
+calculateEvaluationLoss()
+classifyMove()
+
+==================================================
+18. MOVE QUALITY DEFAULTS
+==================================================
+
+Use:
+
+Excellent:
++8
+
+Good:
++5
+
+Accurate:
++2
+
+Inaccuracy:
+-1
+
+Mistake:
+-3
+
+Blunder:
+-5
+
+These values must be Admin configurable.
+
+==================================================
+19. MOVE QUALITY THRESHOLDS
+==================================================
+
+Use centipawn/evaluation loss from the perspective of the player who made the move.
+
+DEFAULT:
+
+Excellent:
+0–10
+
+Good:
+11–30
+
+Accurate:
+31–60
+
+Inaccuracy:
+61–100
+
+Mistake:
+101–200
+
+Blunder:
+200+
+
+These are configurable.
+
+Do not simply classify every move that differs from Stockfish's first choice as a blunder.
+
+Calculate evaluation loss properly.
+
+Handle:
+
+- White
+- Black
+- Check
+- Checkmate
+- Tactical positions
+- Forced moves
+- Captures
+- Endgames
+
+==================================================
+20. MOVE SCORING
+==================================================
+
+For every move:
+
+1. Verify move.
+2. Store FEN before.
+3. Analyze position.
+4. Analyze resulting position.
+5. Calculate evaluation loss.
+6. Classify move.
+7. Create move evaluation.
+8. Create point ledger transaction.
+9. Broadcast score.
+
+Example:
+
+Excellent move:
+
++8
+
+Blunder:
+
+-5
+
+The penalties should remain small.
+
+Do not allow normal chess play to destroy hundreds of points.
+
+==================================================
+21. CAPTURE + MOVE QUALITY
+==================================================
+
+Capture scoring and move-quality scoring are independent.
+
+If a player captures a Queen with an Excellent move:
+
+Queen:
+
++90
+
+Excellent:
+
++8
+
+Total:
+
++98
+
+Create TWO separate ledger transactions:
+
+CHESS_CAPTURE
++90
+
+CHESS_MOVE_QUALITY
++8
+
+This makes scoring completely auditable.
+
+==================================================
+22. ANTI-FARMING
+==================================================
+
+Implement optional anti-farming controls.
+
+Admin settings:
+
+enableFarmingGuard
+
+default:
+
+true
+
+farmingGuardFirstNPlies:
+
+12
+
+If enabled:
+
+Do not award move-quality bonuses during the first N plies.
+
+Capture points still work.
+
+Result scoring still works.
+
+This prevents players from farming easy engine-approved opening moves.
+
+==================================================
+23. EARLY-RESIGNATION GUARD
+==================================================
+
+Implement:
+
+earlyResignationGuard
+
+Default:
+
+enabled
+
+earlyResignationPly:
+
+15
+
+If a player resigns or loses by timeout before the configured ply:
+
+Zero the game's chess-derived score according to competition rules.
+
+Create an explicit ledger/audit entry.
+
+Do not silently delete transactions.
+
+This prevents intentionally dumping games for partial points.
+
+==================================================
+24. CHESS ENGINE FAILURE
+==================================================
+
+Critical rule:
+
+ENGINE FAILURE MUST NEVER PENALIZE A TEAM.
+
+If Stockfish analysis is unavailable:
+
+Store:
+
+PENDING_ANALYSIS
+
+Award:
+
+0 move-quality points temporarily.
+
+Do NOT guess.
+
+Do NOT classify as blunder.
+
+Do NOT deduct points.
+
+Queue the move for later analysis.
+
+When analysis succeeds:
+
+Apply the correct score.
+
+Notify the client:
+
+"Chess analysis temporarily unavailable — scoring will sync once available."
+
+==================================================
+25. CHESS ENGINE ARCHITECTURE
+==================================================
+
+Do NOT spawn a new Stockfish process for every HTTP request.
+
+Create an engine service/worker architecture.
+
+Use:
+
+Chess Move
+↓
+Analysis Queue
+↓
+Stockfish Worker
+↓
+Evaluation
+↓
+Move Classification
+↓
+Point Ledger
+
+Configure:
+
+Engine depth
+Engine time limit
+Maximum concurrent analyses
+Queue size
+
+This prevents many simultaneous chess games from exhausting the server.
+
+Target approximately:
+
+100 concurrent chess games maximum in a stress scenario.
+
+==================================================
+26. LIVE CHESS SCORE
+==================================================
+
+During the game show:
+
+CURRENT CHESS SCORE
+
+Capture Points
+Move Quality Points
+Result Bonus
+Current Total
+
+Also:
+
+Pieces Captured
+
+Pawn ×3
+Knight ×1
+Queen ×1
+
+Move Performance:
+
+Excellent: 4
+Good: 7
+Accurate: 12
+Inaccuracy: 2
+Mistake: 1
+Blunder: 1
+
+Do NOT reveal:
+
+Stockfish best move
+Principal variation
+Exact engine evaluation
+Suggested move
+
+during the live match.
+
+Only display:
+
+"Excellent Move +8"
+
+"Blunder -5"
+
+etc.
+
+==================================================
+27. POST-MATCH ANALYSIS
+==================================================
+
+After the game:
+
+Show:
+
+Match result
+Capture score
+Move-quality score
+Result bonus
+Final chess points
+
+Statistics:
+
+Excellent
+Good
+Accurate
+Inaccuracy
+Mistake
+Blunder
+
+Optionally show move-by-move analysis.
+
+Admin controls whether detailed engine information is visible.
+
+Never show live engine suggestions.
+
+==================================================
+28. DEBUGGING ARENA
+==================================================
+
+The debugging system is entirely MCQ based.
+
+NO external online judge.
+
+NO HackerRank dependency.
+
+Questions come from our own PostgreSQL database.
+
+The admin creates and manages questions.
+
+==================================================
+29. QUESTION STRUCTURE
+==================================================
+
+Each question contains:
+
+id
+title
+prompt
+language
+codeSnippet
+optionA
+optionB
+optionC
+optionD
+correctAnswer
+difficulty
+points
+timeLimit
+category
+explanation
+hint
+premium
+active
+createdAt
+updatedAt
+
+Supported languages:
+
+C
+C++
+Java
+Python
+JavaScript
+
+The system must allow additional languages later.
+
+==================================================
+30. DEBUGGING DIFFICULTY
+==================================================
+
+DEFAULT:
+
+Easy:
+10 points
+
+Medium:
+20 points
+
+Hard:
+30 points
+
+Expert:
+50 points
+
+These values are configurable.
+
+==================================================
+31. DEBUGGING QUESTION FLOW
+==================================================
+
+Server:
+
+1. Select question.
+2. Create attempt.
+3. Start server-side timer.
+4. Send question to client.
+5. NEVER send correct answer.
+6. Client submits answer.
+7. Backend validates.
+8. Backend checks timer.
+9. Backend calculates points.
+10. Create ledger transaction.
+11. Update debugging score.
+12. Broadcast team score.
+13. Record attempt.
+
+==================================================
+32. SERVER-SIDE TIMER
+==================================================
+
+Do NOT trust:
+
+JavaScript timer
+browser clock
+system clock
+
+The server must determine whether the question expired.
+
+Store:
+
+startedAt
+expiresAt
+submittedAt
+
+If the user disconnects:
+
+The server timer continues.
+
+If time expires:
+
+Automatically mark question as expired/submit according to configured rules.
+
+==================================================
+33. DEBUGGING UI
+==================================================
+
+Create a competition-style interface.
+
+LEFT:
+
+Question
+Description
+Code
+Language
+Difficulty
+Points
+
+RIGHT:
+
+Timer
+Options
+Power-ups
+Submit
+
+Use Monaco Editor or equivalent syntax highlighting.
+
+The code should be read-only unless the question type explicitly requires editing.
+
+Primary task is MCQ selection.
+
+==================================================
+34. POWER-UPS
+==================================================
+
+Create these exact power-ups:
+
+1. FREEZE TIME
+
+Cost:
+100 points
+
+Effect:
+Freeze debugging timer for 30 seconds.
+
+2. 50/50
+
+Cost:
+80 points
+
+Effect:
+Remove two incorrect options.
+
+3. BLAST WRONG OPTION
+
+Cost:
+50 points
+
+Effect:
+Remove one incorrect option.
+
+4. EXTRA TIME
+
+Cost:
+100 points
+
+Effect:
+Add 30 seconds.
+
+5. SKIP QUESTION
+
+Cost:
+150 points
+
+Effect:
+Skip current question.
+
+6. HINT
+
+Cost:
+120 points
+
+Effect:
+Show one hint.
+
+Power-ups are purchased using team points.
+
+==================================================
+35. POWER-UP SECURITY
+==================================================
+
+Power-ups are consumed server-side.
+
+Every activation requires:
+
+operationId
+
+Refreshing browser must NOT restore used power-up.
+
+Prevent duplicate activation.
+
+Freeze Time must pause the actual server-side timer.
+
+Not just the displayed timer.
+
+==================================================
+36. FREEZE TIME LIMIT
+==================================================
+
+Default:
+
+Maximum cumulative Freeze Time per team per round:
+
+60 seconds
+
+Admin configurable.
+
+Do not allow unlimited Freeze Time farming.
+
+Optionally disable purchasing/activation of Freeze Time during the final configured portion of a round.
+
+Default:
+
+final 2 minutes.
+
+Make configurable.
+
+==================================================
+37. SHOP
+==================================================
+
+Create a premium reward shop.
+
+Shop categories:
+
+POWER-UPS
+
+INDIVIDUAL QUESTIONS
+
+QUESTION SETS
+
+==================================================
+38. INDIVIDUAL PREMIUM QUESTION PURCHASE
+==================================================
+
+A team can spend:
+
+60 points
+
+to unlock ONE individual premium debugging question.
+
+Exact rule:
+
+60 points = unlock one individual premium question.
+
+After purchase:
+
+The question becomes available to that team.
+
+Store:
+
+teamId
+questionId
+purchaseId
+cost
+timestamp
+
+Do not charge twice if the request is retried.
+
+==================================================
+39. PREMIUM QUESTION SET
+==================================================
+
+Create a premium set:
+
+Price:
+
+500 points
+
+Contents:
+
+25 questions
+
+Reward:
+
+50 points per correct question
+
+All 25 questions must be higher difficulty.
+
+Language:
+
+ANY LANGUAGE.
+
+The set should NOT be restricted to one programming language.
+
+For example, one set may contain:
+
+C++
+Java
+Python
+JavaScript
+C
+
+mixed together.
+
+The premium set should be:
+
+Hard / Expert
+
+and award:
+
+50 points per correct answer.
+
+The exact questions belong to the set.
+
+==================================================
+40. PREMIUM SET OWNERSHIP
+==================================================
+
+When purchased:
+
+Team owns the set.
+
+The team can access the 25 questions.
+
+Do not charge again for each question inside an already purchased set.
+
+Individual premium question purchases and premium-set purchases are separate products.
+
+Do not allow duplicate purchase of the same set unless Admin enables re-purchase.
+
+==================================================
+41. SHOP TRANSACTION
+==================================================
+
+Purchasing:
+
+1. Request purchase.
+2. Authenticate user.
+3. Identify team.
+4. Check competition state.
+5. Check balance.
+6. Check product availability.
+7. Check duplicate ownership.
+8. Begin DB transaction.
+9. Deduct points.
+10. Create purchase record.
+11. Create point ledger transaction.
+12. Grant inventory/ownership.
+13. Commit.
+14. Broadcast new balance.
+
+Never trust a client-sent balance.
+
+==================================================
+42. LIVE TEAM SYNCHRONIZATION
+==================================================
+
+Use:
+
+Socket.IO
+
+for real-time events.
+
+The two sessions of the same team must receive private team events.
+
+Example:
+
+TEAM-001
+
+Chess session:
+
+Queen captured +90
+
+↓
+
+Debugging session receives:
+
+Chess +90
+
+Total +90
+
+No page refresh.
+
+Similarly:
+
+Debugging buys Freeze Time -100
+
+↓
+
+Chess session immediately sees:
+
+Balance -100
+
+==================================================
+43. REAL-TIME EVENTS
+==================================================
+
+Implement events such as:
+
+team:score_updated
+team:balance_updated
+team:session_joined
+team:session_left
+team:powerup_updated
+team:purchase_completed
+
+chess:match_found
+chess:match_started
+chess:move_accepted
+chess:move_evaluated
+chess:piece_captured
+chess:match_completed
+
+debugging:question_started
+debugging:answer_submitted
+debugging:question_expired
+
+leaderboard:updated
+
+notification:new
+
+Private team events must NEVER be broadcast to unrelated teams.
+
+==================================================
+44. LEADERBOARD
+==================================================
+
+Display:
+
+Rank
+Team
+Chess Points
+Debugging Points
+Total Points
+
+Example:
+
+#1 TEAM-014
+Chess: 800
+Debugging: 650
+Total: 1450
+
+#2 TEAM-021
+Chess: 750
+Debugging: 670
+Total: 1420
+
+Highlight current team.
+
+Animate rank changes subtly.
+
+==================================================
+45. LEADERBOARD ANTI-SNIPING
+==================================================
+
+Implement an optional anti-sniping mechanism.
+
+During active shop windows:
+
+Debugging-role users should see a delayed leaderboard.
+
+Default:
+
+60–90 seconds delay.
+
+Admin configurable.
+
+Actual live rank can be visible to:
+
+- Admin
+- Spectator display if enabled
+- Between rounds
+
+This prevents competitors from exploiting exact purchase timing/rank changes.
+
+==================================================
+46. DASHBOARD ACTIVITY FEED
+==================================================
+
+Display live activity:
+
+Queen captured
++90
+
+Excellent move
++8
+
+Correct answer
++30
+
+Freeze Time purchased
+-100
+
+Premium question unlocked
+-60
+
+Blunder
+-5
+
+Do not show sensitive information belonging to another team.
+
+==================================================
+47. TEAM PROFILE
+==================================================
+
+Display:
+
+Team ID
+Team Name
+Rank
+
+Chess:
+
+Matches
+Wins
+Draws
+Losses
+Pawns captured
+Knights captured
+Bishops captured
+Rooks captured
+Queens captured
+Checkmates
+Capture Points
+Move Quality Points
+Result Bonus
+
+Debugging:
+
+Questions attempted
+Correct
+Incorrect
+Accuracy
+Easy
+Medium
+Hard
+Expert
+
+Economy:
+
+Available Balance
+Points Earned
+Points Spent
+Power-ups Owned
+Premium Questions
+Premium Sets
+
+==================================================
+48. ADMIN DASHBOARD
+==================================================
+
+Create a separate protected:
+
+/admin
+
+section.
+
+Admin Dashboard should contain:
+
+Overview
+Teams
+Sessions
+Questions
+Question Sets
+Power-ups
+Shop
+Chess Scoring
+Competition Settings
+Leaderboard
+Transactions
+Monitoring
+Audit Logs
+
+==================================================
+49. ADMIN TEAM MANAGEMENT
+==================================================
+
+Admin can:
+
+Create team
+Edit team
+Disable team
+Delete team
+Reset password
+View active sessions
+Force logout
+View team scores
+View transactions
+View match history
+View debugging history
+
+==================================================
+50. ADMIN QUESTION MANAGEMENT
+==================================================
+
+Admin can:
+
+Create
+Edit
+Delete
+Enable
+Disable
+
+Question fields:
+
+Title
+Prompt
+Code
+Language
+Options
+Correct Answer
+Difficulty
+Points
+Time
+Category
+Explanation
+Hint
+Premium
+Active
+
+==================================================
+51. ADMIN QUESTION SET MANAGEMENT
+==================================================
+
+Admin can:
+
+Create set
+Edit set
+Delete set
+Set price
+Add questions
+Remove questions
+Set difficulty
+Set points/question
+Enable/disable
+
+Default premium set:
+
+25 questions
+500 points
+50 points/question
+Mixed languages
+High difficulty
+
+==================================================
+52. ADMIN POWER-UP MANAGEMENT
+==================================================
+
+Admin can:
+
+Create
+Edit
+Disable
+Delete
+
+Power-up:
+
+Name
+Description
+Cost
+Effect
+Duration
+Usage limits
+Active status
+
+==================================================
+53. ADMIN CHESS SCORING
+==================================================
+
+Admin must be able to configure:
+
+CAPTURE:
+
+Pawn
+Knight
+Bishop
+Rook
+Queen
+King/Checkmate
+
+RESULT:
+
+Win
+Draw
+Loss
+
+MOVE QUALITY:
+
+Excellent
+Good
+Accurate
+Inaccuracy
+Mistake
+Blunder
+
+ENGINE:
+
+Evaluation thresholds
+Engine depth
+Engine time
+Maximum bonus
+Maximum penalty
+
+ANTI-FARMING:
+
+Enable/disable
+First N plies
+
+EARLY RESIGNATION:
+
+Enable/disable
+Ply threshold
+
+POST-MATCH ANALYSIS:
+
+Enable/disable
+
+All scoring changes must be audit logged.
+
+==================================================
+54. COMPETITION CONTROL
+==================================================
+
+Admin can:
+
+START
+PAUSE
+RESUME
+END
+
+When competition is paused:
+
+- Preserve active sessions
+- Prevent new debugging submissions
+- Prevent purchases if configured
+- Prevent new scoring events where appropriate
+- Display:
+
+"Competition Paused"
+
+When ended:
+
+- Stop new gameplay
+- Preserve all records
+- Lock scores
+- Finalize leaderboard
+
+==================================================
+55. DATABASE
+==================================================
+
+Use:
+
+PostgreSQL
+
+Recommended:
+
+Supabase PostgreSQL
+
+Create proper migrations.
+
+Tables:
+
+teams
+team_sessions
+users
+admin_users
+
+chess_matches
+chess_players
+chess_moves
+chess_move_evaluations
+chess_events
+
+debugging_questions
+debugging_attempts
+question_sets
+question_set_questions
+team_question_unlocks
+
+powerups
+team_powerups
+
+shop_items
+purchases
+
+point_transactions
+
+competition_settings
+
+notifications
+
+audit_logs
+
+==================================================
+56. IMPORTANT DATABASE CONSTRAINTS
+==================================================
+
+Use:
+
+Foreign keys
+Unique constraints
+Indexes
+Transactions
+Check constraints
+Timestamps
+
+Important indexes:
+
+teamId
+sessionId
+matchId
+questionId
+operationId
+eventId
+createdAt
+
+Prevent:
+
+Duplicate chess events
+Duplicate purchases
+Duplicate question submissions
+Duplicate power-up activation
+
+==================================================
+57. BACKEND ARCHITECTURE
+==================================================
+
+Use:
+
+Node.js
+Express
+TypeScript
+
+Suggested:
+
+backend/
+
+src/
+
+config/
+controllers/
+routes/
+middleware/
+services/
+  auth/
+  teams/
+  points/
+  chess/
+  chess-engine/
+  debugging/
+  powerups/
+  shop/
+  leaderboard/
+  realtime/
+  admin/
+
+workers/
+  chess-analysis-worker/
+
+database/
+utils/
+
+server.ts
+
+==================================================
+58. SERVICE RESPONSIBILITIES
+==================================================
+
+AuthService
+
+TeamSessionService
+
+PointLedgerService
+
+ChessService
+
+ChessMatchService
+
+ChessAnalysisService
+
+DebuggingService
+
+QuestionService
+
+PowerUpService
+
+ShopService
+
+LeaderboardService
+
+NotificationService
+
+AuditService
+
+CompetitionService
+
+Do not put all business logic inside Express route files.
+
+==================================================
+59. POINT LEDGER SERVICE
+==================================================
+
+Create one central service:
+
+PointLedgerService
+
+Methods:
+
+awardPoints()
+spendPoints()
+refundPoints()
+adjustPoints()
+getBalance()
+getTransactions()
+
+Every other service must use this service.
+
+Example:
+
+ChessService
+→ PointLedgerService.awardPoints()
+
+DebuggingService
+→ PointLedgerService.awardPoints()
+
+ShopService
+→ PointLedgerService.spendPoints()
+
+Never:
+
+team.points += 100
+
+directly in random services.
+
+==================================================
+60. ATOMICITY
+==================================================
+
+Every balance-affecting operation must be atomic.
+
+Example:
+
+Initial balance:
+
+500
+
+Chess:
+
++100
+
+Debugging:
+
+-80
+
+Final:
+
+520
+
+Even if these happen at exactly the same time.
+
+Do not allow stale writes to overwrite one another.
+
+Use PostgreSQL transactions and appropriate row locking / atomic updates.
+
+==================================================
+61. IDEMPOTENCY
+==================================================
+
+Implement idempotency for:
+
+Chess move processing
+Chess capture scoring
+Chess result scoring
+Debugging submission
+Power-up activation
+Shop purchase
+Premium question unlocking
+
+Repeated request:
+
+MUST NOT
+
+award points twice.
+
+==================================================
+62. AUTHENTICATION SECURITY
+==================================================
+
+Use:
+
+Secure password hashing
+
+Prefer:
+
+Argon2
+
+or:
+
+bcrypt
+
+Use:
+
+HTTP-only cookies
+
+Secure cookies in production
+
+SameSite protection
+
+Session expiration
+
+CSRF protection where applicable
+
+Rate limiting
+
+Input validation
+
+RBAC
+
+Do not expose:
+
+Passwords
+Secrets
+API keys
+Correct answers
+Internal engine information
+
+==================================================
+63. SECURITY
+==================================================
+
+Implement:
+
+Helmet or equivalent security headers
+
+CORS configuration
+
+Rate limiting
+
+Input validation
+
+SQL injection protection
+
+XSS protection
+
+CSRF protection where applicable
+
+Authentication middleware
+
+Authorization middleware
+
+Audit logging
+
+Secure error responses
+
+Do not expose stack traces in production.
+
+==================================================
+64. CHESS ANTI-CHEATING
+==================================================
+
+The browser cannot determine scoring.
+
+The backend verifies:
+
+- Team
+- Role
+- Match
+- Color
+- Turn
+- Legal move
+- Current board state
+- Captured piece
+
+Stockfish analysis is server-side.
+
+Never expose engine best moves during gameplay.
+
+==================================================
+65. DEBUGGING ANTI-CHEATING
+==================================================
+
+Never send:
+
+correctAnswer
+
+to the client before submission.
+
+Never trust:
+
+client points
+client timer
+client difficulty
+client balance
+client question result
+
+Everything is verified server-side.
+
+==================================================
+66. RECONNECTION
+==================================================
+
+If a participant loses internet:
+
+When they reconnect:
+
+Restore:
+
+Session
+Team
+Role
+Chess match
+Chess board
+Debugging question
+Timer state
+Power-up inventory
+Current score
+
+Do not create duplicate sessions because of reconnection.
+
+==================================================
+67. CONCURRENCY TARGET
+==================================================
+
+Target:
+
+Approximately 200 concurrent users.
+
+Potentially:
+
+100 teams × 2 sessions.
+
+Design for:
+
+100 simultaneous chess games
+100 debugging sessions
+200 WebSocket connections
+Concurrent point updates
+Concurrent shop purchases
+Concurrent question submissions
+Concurrent leaderboard updates
+
+Use:
+
+Database transactions
+Indexes
+Connection pooling
+WebSocket rooms
+Background workers
+Queued Stockfish analysis
+
+==================================================
+68. CHESS ENGINE RESOURCE MANAGEMENT
+==================================================
+
+Never allow one match to consume all server resources.
+
+Use:
+
+Analysis queue
+Worker process
+Configurable engine depth
+Configurable time limit
+Maximum queue size
+Maximum concurrent analysis jobs
+
+If the queue is full:
+
+Store move as:
+
+PENDING_ANALYSIS
+
+Never penalize.
+
+==================================================
+69. UI/UX
+==================================================
+
+The website should look like a real university competition platform.
+
+NOT:
+
+A generic Bootstrap dashboard.
+
+NOT:
+
+A basic CRUD admin panel.
+
+NOT:
+
+A simple student project.
+
+Use:
+
+Dark black base
+
+Gold/bronze highlights inspired by the poster
+
+White typography
+
+Red accents
+
+Glass panels
+
+Subtle gradients
+
+Modern cards
+
+Smooth transitions
+
+Professional icons
+
+Chess-inspired visual elements
+
+Code-inspired visual elements
+
+==================================================
+70. LANDING PAGE
+==================================================
+
+Hero:
+
+CODEMATE 2.0
+
+Subtitle:
+
+"Same Board. Different Game."
+
+Supporting message:
+
+"Code. Strategize. Conquer."
+
+Buttons:
+
+ENTER COMPETITION
+
+VIEW RULES
+
+Hero visual:
+
+Chess piece + code/editor visual.
+
+Use the supplied poster as inspiration.
+
+Sections:
+
+How It Works
+
+Chess Arena
+
+Debugging Arena
+
+Power-Ups
+
+Reward Shop
+
+Leaderboard
+
+Rules
+
+==================================================
+71. DASHBOARD CARDS
+==================================================
+
+Show:
+
+CHESS POINTS
+
+DEBUGGING POINTS
+
+AVAILABLE BALANCE
+
+TOTAL EARNED
+
+CURRENT RANK
+
+ACTIVE SESSIONS
+
+Use animated counters when values change.
+
+==================================================
+72. CHESS PAGE
+==================================================
+
+Layout:
+
+Left:
+Chess board
+
+Right:
+Match information
+
+Opponent
+Color
+Current score
+Capture points
+Move quality
+Match status
+
+Below:
+
+Move history
+
+Live activity
+
+==================================================
+73. DEBUGGING PAGE
+==================================================
+
+Layout:
+
+Question panel
+
+Code panel
+
+Options
+
+Timer
+
+Power-ups
+
+Points
+
+Submit button
+
+Progress indicator
+
+Question difficulty
+
+==================================================
+74. SHOP PAGE
+==================================================
+
+Use premium product cards.
+
+Sections:
+
+POWER-UPS
+
+PREMIUM QUESTIONS
+
+PREMIUM SETS
+
+Each card:
+
+Icon
+Name
+Description
+Cost
+Owned
+Purchase
+
+==================================================
+75. LEADERBOARD PAGE
+==================================================
+
+Create a visually strong competition leaderboard.
+
+Top 3 teams should receive special visual treatment.
+
+Display:
+
+Rank
+Team
+Chess
+Debugging
+Total
+
+Animate movement when ranks change.
+
+==================================================
+76. ADMIN MONITORING
+==================================================
+
+Display:
+
+Total teams
+Active sessions
+Chess matches
+Active chess games
+Debugging participants
+Questions answered
+Correct answers
+Points earned
+Points spent
+Pieces captured
+Excellent moves
+Blunders
+Power-ups used
+Premium questions purchased
+Premium sets purchased
+Current leader
+
+==================================================
+77. AUDIT LOG
+==================================================
+
+Track:
+
+Login
+Logout
+Session creation
+Session expiration
+Force logout
+Chess move
+Chess capture
+Move evaluation
+Chess result
+Debugging submission
+Power-up activation
+Shop purchase
+Premium unlock
+Point adjustment
+Scoring rule changes
+Competition state changes
+
+Fields:
+
+timestamp
+teamId
+sessionId
+role
+action
+referenceId
+metadata
+
+==================================================
+78. NOTIFICATIONS
+==================================================
+
+Examples:
+
+"Queen captured! +90"
+
+"Excellent move! +8"
+
+"Good move! +5"
+
+"Blunder -5"
+
+"Correct answer! +50"
+
+"Freeze Time activated!"
+
+"Premium question unlocked!"
+
+"Premium set unlocked!"
+
+"Your team moved to Rank #3"
+
+"Chess analysis temporarily unavailable — scoring will sync once available."
+
+==================================================
+79. API
+==================================================
+
+Create clean REST APIs.
+
+AUTH:
+
+POST /api/auth/login
+POST /api/auth/logout
+GET /api/auth/session
+
+TEAM:
+
+GET /api/team
+GET /api/team/score
+GET /api/team/activity
+
+CHESS:
+
+POST /api/chess/matchmaking/join
+POST /api/chess/matches/:id/move
+POST /api/chess/matches/:id/resign
+GET /api/chess/matches
+GET /api/chess/matches/:id
+GET /api/chess/matches/:id/moves
+
+DEBUGGING:
+
+GET /api/debug/questions
+GET /api/debug/questions/:id
+POST /api/debug/questions/:id/submit
+GET /api/debug/history
+
+POWERUPS:
+
+GET /api/powerups
+GET /api/team/powerups
+POST /api/powerups/:id/use
+
+SHOP:
+
+GET /api/shop
+POST /api/shop/purchase
+
+PREMIUM:
+
+GET /api/premium/questions
+POST /api/premium/questions/:id/unlock
+
+GET /api/premium/sets
+POST /api/premium/sets/:id/purchase
+
+LEADERBOARD:
+
+GET /api/leaderboard
+
+ADMIN:
+
+/api/admin/teams
+/api/admin/questions
+/api/admin/question-sets
+/api/admin/powerups
+/api/admin/shop
+/api/admin/scoring
+/api/admin/settings
+/api/admin/transactions
+/api/admin/audit
+/api/admin/monitoring
+
+==================================================
+80. ENVIRONMENT
+==================================================
+
+Create:
+
+.env.example
+
+Never hardcode secrets.
+
+Example:
+
+DATABASE_URL=
+
+SUPABASE_URL=
+
+SUPABASE_SERVICE_ROLE_KEY=
+
+SESSION_SECRET=
+
+JWT_SECRET=
+
+FRONTEND_URL=
+
+STOCKFISH_PATH=
+
+SOCKET_SERVER_URL=
+
+NODE_ENV=
+
+==================================================
+81. TECHNOLOGY STACK
+==================================================
+
+Use the following stack.
+
+FRONTEND:
+
+React
+TypeScript
+Vite
+Tailwind CSS
+React Router
+Lucide React
+
+CHESS FRONTEND:
+
+react-chessboard
+chess.js
+
+BACKEND:
+
+Node.js
+Express
+TypeScript
+
+DATABASE:
+
+PostgreSQL
+
+Recommended hosting/database:
+
+Supabase
+
+REAL-TIME:
+
+Socket.IO
+
+CHESS ENGINE:
+
+Stockfish
+
+CODE DISPLAY:
+
+Monaco Editor
+
+AUTH:
+
+Argon2 or bcrypt
+HTTP-only cookie sessions
+
+VERSION CONTROL:
+
+GitHub
+
+FRONTEND HOSTING:
+
+Vercel
+
+BACKEND:
+
+A Node-compatible hosting service such as Render or another suitable deployment target.
+
+The architecture must remain self-hostable.
+
+==================================================
+82. FREE-FIRST REQUIREMENT
+==================================================
+
+The application must be designed so that development can be done using free/open-source infrastructure.
+
+Do not require paid API keys for core functionality.
+
+Do not introduce an external AI API for:
+
+Chess scoring
+Debugging scoring
+Point calculation
+
+Use:
+
+chess.js
+
+Stockfish
+
+PostgreSQL
+
+for core functionality.
+
+If an external service is optional, isolate it behind an adapter.
+
+==================================================
+83. PROJECT STRUCTURE
+==================================================
+
+Recommended:
+
+codemate-2/
+
+frontend/
+backend/
+database/
+docs/
+
+frontend:
+
+src/
+components/
+pages/
+layouts/
+hooks/
+services/
+types/
+utils/
+
+backend:
+
+src/
+config/
+controllers/
+routes/
+middleware/
+services/
+workers/
+utils/
+
+database:
+
+migrations/
+seed/
+
+docs:
+
+README.md
+SETUP.md
+DEPLOYMENT.md
+API.md
+DATABASE.md
+SECURITY.md
+ARCHITECTURE.md
+
+==================================================
+84. SEED DATA
+==================================================
+
+Create development seed data.
+
+10 demo teams
+
+20 debugging questions
+
+6 power-ups
+
+5 premium question sets
+
+Sample chess matches
+
+Sample chess moves
+
+Sample move evaluations
+
+Sample point transactions
+
+Demo admin
+
+The seed data must be clearly marked as development/demo data.
+
+==================================================
+85. ADMIN SCORING CONFIGURATION
+==================================================
+
+Seed the following exact default values.
+
+CHESS CAPTURE:
+
+Pawn = 10
+Knight = 30
+Bishop = 30
+Rook = 50
+Queen = 90
+King/Checkmate = 70
+
+RESULT:
+
+Win = 100
+Draw = 50
+Loss = 10
+
+MOVE QUALITY:
+
+Excellent = +8
+Good = +5
+Accurate = +2
+Inaccuracy = -1
+Mistake = -3
+Blunder = -5
+
+DEBUGGING:
+
+Easy = 10
+Medium = 20
+Hard = 30
+Expert = 50
+
+SHOP:
+
+Freeze Time = 100
+50/50 = 80
+Blast Wrong Option = 50
+Extra Time = 100
+Skip Question = 150
+Hint = 120
+
+INDIVIDUAL PREMIUM QUESTION:
+
+60
+
+PREMIUM SET:
+
+500
+
+Questions:
+
+25
+
+Points/question:
+
+50
+
+Language:
+
+Mixed
+
+Difficulty:
+
+High / Hard / Expert
+
+==================================================
+86. LOAD TESTING
+==================================================
+
+Create a load-testing setup.
+
+Test approximately:
+
+200 concurrent users.
+
+Test:
+
+200 WebSocket sessions
+100 simultaneous teams
+Concurrent point updates
+Concurrent shop purchases
+Concurrent debugging submissions
+Concurrent chess moves
+Stockfish queue
+Leaderboard updates
+
+Critical test:
+
+Balance = 500
+
+Chess adds:
+
++100
+
+Debugging spends:
+
+-80
+
+Final:
+
+520
+
+The final result must be deterministic.
+
+==================================================
+87. AUTOMATED TESTING
+==================================================
+
+Create tests for:
+
+Authentication
+
+Two-session limit
+
+Third login rejection
+
+Session expiration
+
+Role assignment
+
+Role locking
+
+Chess legal moves
+
+Chess capture detection
+
+Pawn scoring
+
+Knight scoring
+
+Bishop scoring
+
+Rook scoring
+
+Queen scoring
+
+Checkmate bonus
+
+Win bonus
+
+Draw bonus
+
+Loss bonus
+
+Excellent move
+
+Good move
+
+Accurate move
+
+Inaccuracy
+
+Mistake
+
+Blunder
+
+Capture + move quality on same move
+
+Duplicate chess event
+
+Engine failure
+
+Pending analysis
+
+Farming guard
+
+Early resignation guard
+
+Debugging correct answer
+
+Debugging incorrect answer
+
+Server-side timer
+
+Client clock manipulation
+
+Power-up activation
+
+Duplicate power-up activation
+
+Freeze Time
+
+Shop purchase
+
+Insufficient balance
+
+Premium question unlock
+
+Premium set purchase
+
+Duplicate premium set purchase
+
+Concurrent point updates
+
+Leaderboard delay
+
+==================================================
+88. END-TO-END TEST
+==================================================
+
+Before declaring the application complete, run:
+
+1. Login TEAM-001 as Chess.
+
+2. Login TEAM-001 as Debugging.
+
+3. Verify both sessions active.
+
+4. Attempt third login.
+
+5. Verify rejection:
+
+"Maximum active participants reached for this team."
+
+6. Start chess match.
+
+7. Start debugging question.
+
+8. Chess captures Pawn.
+
+Award:
+
++10
+
+9. Debugging participant immediately sees +10.
+
+10. Chess makes Excellent move.
+
+Award:
+
++8
+
+11. Debugging participant sees +8.
+
+12. Chess captures Queen.
+
+Award:
+
++90
+
+13. Debugging solves a 30-point question.
+
+Award:
+
++30
+
+14. Chess participant sees +30.
+
+15. Debugging buys Freeze Time.
+
+Deduct:
+
+-100
+
+16. Chess participant immediately sees updated balance.
+
+17. Activate Freeze Time.
+
+18. Verify server-side timer actually pauses.
+
+19. Chess makes Blunder.
+
+Deduct:
+
+-5
+
+20. Chess match ends.
+
+21. Apply result bonus.
+
+22. Update leaderboard.
+
+23. Purchase individual premium question for:
+
+60 points.
+
+24. Verify question unlocked.
+
+25. Purchase premium set:
+
+500 points.
+
+26. Verify 25 questions unlocked.
+
+27. Verify each correct question can award:
+
+50 points.
+
+28. Verify mixed programming languages work.
+
+29. Verify transaction history.
+
+30. Verify no duplicate transactions.
+
+31. Admin force-logs out one session.
+
+32. New session reconnects.
+
+33. Verify scores remain correct.
+
+34. Verify leaderboard remains correct.
+
+==================================================
+89. ERROR STATES
+==================================================
+
+Implement polished error handling.
+
+Examples:
+
+Third login:
+
+"Maximum active participants reached for this team."
+
+Insufficient points:
+
+"You don't have enough points to purchase this item."
+
+Question expired:
+
+"Time's up!"
+
+Already submitted:
+
+"This question has already been submitted."
+
+Competition paused:
+
+"Competition Paused"
+
+Connection lost:
+
+"Connection lost. Reconnecting..."
+
+Engine unavailable:
+
+"Chess analysis temporarily unavailable — scoring will sync once available."
+
+Session expired:
+
+"Your session has expired. Please log in again."
+
+==================================================
+90. HEALTH MONITORING
+==================================================
+
+Create:
+
+GET /health
+
+Return:
+
+server status
+database status
+socket status
+engine status
+timestamp
+
+Admin dashboard should show service health.
+
+==================================================
+91. DOCUMENTATION
+==================================================
+
+Create:
+
+README.md
+
+Include:
+
+Project overview
+Features
+Architecture
+Tech stack
+Setup
+Installation
+Environment variables
+Database migrations
+Seed data
+Development
+Production deployment
+Authentication
+Two-session architecture
+Chess architecture
+Stockfish setup
+Debugging architecture
+Power-ups
+Shop
+Point ledger
+Real-time synchronization
+Admin system
+Testing
+Load testing
+Troubleshooting
+
+Also create:
+
+ARCHITECTURE.md
+DATABASE.md
+API.md
+SECURITY.md
+DEPLOYMENT.md
+
+==================================================
+92. SETUP SCRIPT
+==================================================
+
+Create a simple development setup.
+
+Prefer:
+
+npm run setup
+
+which:
+
+- Installs/prepares dependencies where appropriate
+- Runs migrations
+- Seeds development data
+- Validates environment
+- Creates required configuration
+
+Then:
+
+npm run dev
+
+starts the application.
+
+==================================================
+93. ADMIN CREATION
+==================================================
+
+Do NOT hardcode:
+
+admin/admin123
+
+Create:
+
+npm run create-admin
+
+which securely creates the Admin account.
+
+==================================================
+94. BACKUP / EXPORT
+==================================================
+
+Admin should be able to export:
+
+Teams
+Scores
+Leaderboard
+Chess matches
+Chess moves
+Debugging attempts
+Point transactions
+Purchases
+Power-ups
+
+Prefer:
+
+CSV
+JSON
+
+==================================================
+95. IMPORTANT SOURCE-OF-TRUTH RULE
+==================================================
+
+The following are ALWAYS server authoritative:
+
+Scores
+Point balances
+Chess board state
+Chess move legality
+Chess captures
+Chess results
+Move quality
+Stockfish analysis
+Debugging answers
+Debugging timer
+Power-up ownership
+Power-up usage
+Shop purchases
+Premium question ownership
+Leaderboard
+
+Never trust client-provided versions of these values.
+
+==================================================
+96. DO NOT USE EXTERNAL CHESS WEBSITE
+==================================================
+
+This requirement overrides any previous architecture that suggests using Lichess, Chess.com or another external chess website for live gameplay.
+
+The chess game MUST be hosted inside CodeMate 2.0.
+
+Use:
+
+react-chessboard
+chess.js
+Socket.IO
+Node.js
+Stockfish
+
+The platform itself owns:
+
+Matchmaking
+Match state
+Moves
+Captures
+Results
+Scoring
+Move analysis
+History
+
+==================================================
+97. BUILD PHASES
+==================================================
+
+Build in this exact order.
+
+PHASE 1
+
+Project architecture
+Database schema
+Environment
+Basic frontend/backend
+
+PHASE 2
+
+Authentication
+Team accounts
+Two-session enforcement
+Role system
+
+PHASE 3
+
+Point ledger
+Dashboard
+Team balances
+
+PHASE 4
+
+Debugging MCQ system
+Server timer
+Question database
+
+PHASE 5
+
+Power-ups
+Shop
+Premium individual questions
+Premium sets
+
+PHASE 6
+
+Internal chess board
+Chess matchmaking
+chess.js
+Socket.IO
+
+PHASE 7
+
+Chess capture scoring
+Result scoring
+
+PHASE 8
+
+Stockfish
+Move-quality scoring
+Analysis queue
+
+PHASE 9
+
+Anti-farming
+Early resignation guard
+Engine failure handling
+
+PHASE 10
+
+Real-time synchronization
+Leaderboard
+Anti-sniping
+
+PHASE 11
+
+Admin dashboard
+Monitoring
+Audit logs
+
+PHASE 12
+
+Security hardening
+Automated tests
+Load testing
+Production deployment
+
+AFTER EVERY PHASE:
+
+1. Run the application.
+2. Test existing functionality.
+3. Fix regressions.
+4. Only then proceed to the next phase.
+
+==================================================
+98. FINAL QUALITY REQUIREMENT
+==================================================
+
+The finished application must feel like:
+
+A REAL UNIVERSITY COMPETITION PLATFORM
+
+not:
+
+A CRUD application
+
+not:
+
+A template
+
+not:
+
+A static prototype
+
+not:
+
+a collection of disconnected pages.
+
+The core experience should feel like:
+
+CHESS
++
+DEBUGGING
++
+GAMIFICATION
++
+REWARDS
++
+COMPETITION
+
+==================================================
+99. PRIORITY ORDER
+==================================================
+
+If trade-offs are necessary, prioritize in this exact order:
+
+1. Data integrity
+2. Server-side authority
+3. Security
+4. Chess correctness
+5. Point calculation correctness
+6. Real-time synchronization
+7. Concurrency/reliability
+8. Anti-cheating
+9. Recovery/reconnection
+10. Admin control
+11. Performance
+12. Visual polish
+
+Never sacrifice scoring correctness for visual effects.
+
+==================================================
+100. FINAL IMPLEMENTATION INSTRUCTION
+==================================================
+
+Do not stop after generating the UI.
+
+Actually implement the backend.
+
+Actually implement the database.
+
+Actually implement authentication.
+
+Actually implement the two-session system.
+
+Actually implement the chess game.
+
+Actually implement matchmaking.
+
+Actually implement chess move validation.
+
+Actually implement chess capture detection.
+
+Actually implement Stockfish integration.
+
+Actually implement move-quality scoring.
+
+Actually implement the MCQ system.
+
+Actually implement the server-side timer.
+
+Actually implement power-ups.
+
+Actually implement the shop.
+
+Actually implement premium question unlocking.
+
+Actually implement the 25-question premium sets.
+
+Actually implement the point ledger.
+
+Actually implement real-time synchronization.
+
+Actually implement the leaderboard.
+
+Actually implement the Admin dashboard.
+
+Actually implement security.
+
+Actually implement tests.
+
+Actually implement migrations.
+
+Actually implement seed data.
+
+Do not leave core functionality as TODOs.
+
+Do not replace functionality with mock data.
+
+Do not create fake scoring.
+
+Do not create fake real-time updates.
+
+Do not trust frontend state.
+
+The final project must be cloneable, installable, runnable and deployable.
+
+A developer should be able to clone the repository, configure the environment, run migrations/seeds and start the entire CodeMate 2.0 platform.
+
+The final architecture must be:
+
+                 CODEMATE 2.0
+                       │
+        ┌──────────────┼──────────────┐
+        │              │              │
+        ▼              ▼              ▼
+      CHESS         DEBUGGING        SHOP
+      ARENA           ARENA         REWARDS
+        │              │              │
+        └──────────────┼──────────────┘
+                       ▼
+                NODE.JS BACKEND
+                       │
+          ┌────────────┼────────────┐
+          ▼            ▼            ▼
+      PostgreSQL    Socket.IO    Stockfish
+          │
+          ▼
+   CENTRAL POINT LEDGER
+          │
+       ┌──┴───┐
+       ▼      ▼
+   BALANCE  LEADERBOARD
+       │
+       ▼
+ POWER-UPS + PREMIUM CONTENT
+
+The database/backend is the single source of truth.
+
+Build CodeMate 2.0 accordingly.

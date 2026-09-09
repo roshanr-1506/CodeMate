@@ -1,0 +1,3 @@
+import{defineConfig}from'@playwright/test';import{existsSync}from'node:fs';
+const chrome=process.env.BROWSER_EXECUTABLE??['C:/Program Files/Google/Chrome/Application/chrome.exe','C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'].find(p=>existsSync(p));
+export default defineConfig({testDir:'tests/browser',timeout:120000,fullyParallel:false,workers:1,retries:0,reporter:[['list'],['html',{open:'never'}]],use:{baseURL:'http://127.0.0.1:3101',viewport:{width:1440,height:1000},launchOptions:chrome?{executablePath:chrome}:{},trace:'retain-on-failure',screenshot:'only-on-failure'},webServer:process.env.CODEMATE_E2E_EXTERNAL?undefined:{command:'node .data/tools/tests/e2e-server.js',url:'http://127.0.0.1:3101/health',reuseExistingServer:false,timeout:30000}});

@@ -1,0 +1,20 @@
+CODEMATE 2.0
+Local application: http://127.0.0.1:3001
+
+The project folder on this device is ready to run.
+Double-click Start-CodeMate.cmd to start it again.
+Keep that terminal open while using the app.
+Do not start a second copy if it is already running.
+
+Open LOCAL-ACCESS.txt for your private development login details.
+Use separate browsers or profiles for TEAM-001's Chess and Debugging roles.
+Use TEAM-002 in another browser profile as the chess opponent.
+
+The source ZIP is ready for GitHub and deliberately excludes passwords, local data,
+installed packages and generated builds. On a fresh device:
+  npm install
+  npm run setup
+  npm run build
+  npm run local
+
+Read README.md and docs/DEPLOYMENT.md before a public event deployment.
