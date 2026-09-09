@@ -2,6 +2,7 @@ services:
   - type: web
     name: codemate-2
     runtime: docker
+    preDeployCommand: node .data/tools/scripts/migrate.js
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
