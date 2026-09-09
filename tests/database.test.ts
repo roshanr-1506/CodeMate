@@ -12,7 +12,7 @@ test('PostgreSQL migration is repeatable and constraints exist', async () => {
     ]);
     assert.equal(
       (await db.query('SELECT count(*)::int AS count FROM schema_migrations'))[0].count,
-      2,
+      3,
     );
     assert.equal(
       (await db.query("SELECT value->>'state' AS state FROM competition_settings"))[0].state,
