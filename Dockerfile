@@ -15,4 +15,4 @@ COPY database ./database
 RUN mkdir -p /app/.data && chown -R node:node /app/.data
 USER node
 EXPOSE 3001
-CMD ["node","dist/backend/src/server.js"]
+CMD ["sh", "-c", "node .data/tools/scripts/migrate.js && node dist/backend/src/server.js"]
